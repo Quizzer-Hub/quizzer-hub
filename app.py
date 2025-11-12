@@ -17,12 +17,12 @@ app.secret_key = '9866109958'
 # Set session lifetime
 app.permanent_session_lifetime = timedelta(days=30)
 
-# ----------------- MAKE SESSION PERMANENT -----------------
+
 @app.before_request
 def make_session_permanent():
     session.permanent = True
 
-# ----------------- PREVENT BACK BUTTON AFTER LOGOUT -----------------
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0'
@@ -31,14 +31,17 @@ def add_header(response):
     return response
 
 
+@app.errorhandler(413)
+def file_too_large(e):
+    return "File too large", 413
 
-# ----------------- DATABASE CONFIG -----------------
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'quizzer.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# ----------------- UPLOAD CONFIG -----------------
+
 UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -47,9 +50,9 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ----------------- EMAIL CONFIG -----------------
+
 EMAIL_SENDER = "quizzer1pro@gmail.com"
-EMAIL_PASSWORD = "qkdk onns awhj fnuz"  # Google App Password
+EMAIL_PASSWORD = "qkdk onns awhj fnuz"  
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 465
 
@@ -66,7 +69,7 @@ def send_otp(receiver_email, otp):
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_SENDER, receiver_email, msg.as_string())
 
-# ----------------- MODELS -----------------
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50))
@@ -104,21 +107,16 @@ class Report(db.Model):
 with app.app_context():
     db.create_all()
 
-# ----------------- ROUTES -----------------
-
 @app.route('/')
 def home():
-    # Check if user is logged in
     if 'loggedin' in session:
         if session.get('role') == 'admin':
             return redirect(url_for('admin'))
         else:
             return redirect(url_for('student_dashboard'))
-    # Not logged in, show main homepage
     return render_template('main_homepage.html')
 
 
-# ----------------- REGISTRATION -----------------
 @app.route('/register', methods=['POST'])
 def register():
     # Redirect if already logged in
@@ -166,35 +164,6 @@ def register():
     return redirect(url_for('verify_otp'))
 
 
-@app.route('/randomquiz')
-def random_quiz():
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-
-    course = "be computer"  # ensure this matches your database
-    semesters = ['1', '2', '3', '4', '5', '6', '7', '8']  # all semesters
-    selected_questions = []
-
-    for sem in semesters:
-        # Select 2 random questions from this semester
-        questions = Question.query.filter_by(course=course, semester=sem)\
-                                  .order_by(func.random())\
-                                  .limit(2).all()
-        selected_questions.extend(questions)
-
-    # Prepare data for template
-    questions_data = []
-    for q in selected_questions:
-        questions_data.append({
-            "question": q.question,
-            "options": [q.choice1, q.choice2, q.choice3, q.choice4],
-            "correct_index": q.correct_index
-        })
-
-    return render_template('randomquiz.html', questions=questions_data, username=session['username'])
-
-
-# ----------------- OTP VERIFICATION -----------------
 @app.route('/verify_otp', methods=['GET','POST'])
 def verify_otp():
     # Redirect if already logged in
@@ -222,7 +191,6 @@ def verify_otp():
             db.session.commit()
             session.pop('otp', None)
             session.pop('temp_user', None)
-            # Auto-login user after successful registration
             session['loggedin'] = True
             session['id'] = new_user.id
             session['first_name'] = new_user.first_name
@@ -236,6 +204,7 @@ def verify_otp():
 
     return render_template('verify.html')
 
+
 @app.route('/resend_otp', methods=['POST'])
 def resend_otp():
     user_data = session.get('temp_user')
@@ -248,6 +217,7 @@ def resend_otp():
         return jsonify({"ok": True, "msg": f"OTP resent to {user_data['email']}"})
     except Exception as e:
         return jsonify({"ok": False, "msg": f"Failed to resend OTP: {e}"})
+    
 
 @app.route('/change_otp_email', methods=['POST'])
 def change_otp_email():
@@ -267,11 +237,10 @@ def change_otp_email():
         return jsonify({"ok": True, "msg": f"OTP sent to new email: {new_email}"})
     except Exception as e:
         return jsonify({"ok": False, "msg": f"Failed to send OTP to new email: {e}"})
+    
 
-# ----------------- LOGIN -----------------
 @app.route('/login', methods=['GET','POST'])
 def login():
-    # If already logged in, redirect automatically
     if 'loggedin' in session:
         if session.get('role') == 'admin':
             return redirect(url_for('admin'))
@@ -290,9 +259,7 @@ def login():
         elif not check_password_hash(user.password, password_input):
             flash("Incorrect password", "error")
         else:
-            # Make session permanent
             session.permanent = True
-
             session['loggedin'] = True
             session['id'] = user.id
             session['first_name'] = user.first_name
@@ -304,116 +271,9 @@ def login():
 
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.clear()  # Completely remove all session data
-    flash("You have been logged out successfully.", "success")
-    return redirect(url_for('login'))
 
-
-# Delete a report
-@app.route('/admin/delete_report/<int:report_id>', methods=['DELETE'])
-def delete_report(report_id):
-    report = Report.query.get(report_id)
-    if not report:
-        return jsonify({"ok": False, "error": "Report not found"}), 404
-    try:
-        db.session.delete(report)
-        db.session.commit()
-        return jsonify({"ok": True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-@app.route('/userprofile', methods=['GET', 'POST'])
-def userprofile():
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session.get('id'))
-    if not user:
-        session.clear()
-        flash("User not found.", "danger")
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        action = request.form.get("action")
-
-        # ----- UPDATE PROFILE PICTURE -----
-        if action == "update_pic" and 'profile_pic' in request.files:
-            file = request.files['profile_pic']
-
-            # Validation
-            if file.filename == '':
-                return jsonify({"ok": False, "error": "No file selected."})
-            if not file or not allowed_file(file.filename):
-                return jsonify({"ok": False, "error": "Invalid or missing file."})
-
-            # Generate unique filename and save
-            ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = f"{uuid.uuid4().hex}.{ext}"
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(save_path)
-
-            # Update user info
-            user.profile_pic = filename
-            db.session.commit()
-            session['profile_pic'] = filename
-
-            # Return AJAX response
-            return jsonify({
-                "ok": True,
-                "filename": filename
-            })
-
-        # ----- UPDATE PROFILE USERNAME -----
-        elif action == "update_profile":
-            new_username = request.form.get('username', '').strip()
-            if len(new_username) < 3:
-                return jsonify({"ok": False, "error": "Username too short"})
-
-            existing_user = User.query.filter_by(username=new_username).first()
-            if existing_user and str(existing_user.id) != str(user.id):
-                return jsonify({"ok": False, "error": "Username already taken"})
-
-            user.username = new_username
-            db.session.commit()
-            session['username'] = new_username
-            return jsonify({"ok": True})
-
-        # ----- CHANGE PASSWORD -----
-        elif action == "change_password":
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-
-            if not password or not confirm_password:
-                return jsonify({"ok": False, "error": "Password fields cannot be empty."})
-            if password != confirm_password:
-                return jsonify({"ok": False, "error": "Passwords do not match."})
-
-            user.password = generate_password_hash(password)
-            db.session.commit()
-            return jsonify({"ok": True})
-
-    # ----- GET REQUEST -----
-    profile_pic_url = (
-        url_for('static', filename='uploads/' + user.profile_pic)
-        if user.profile_pic else
-        url_for('static', filename='img/default_avatar.png')
-    )
-    return render_template(
-        "user_profile.html",
-        user=user,
-        profile_pic_url=profile_pic_url,
-        current_year=datetime.now().year
-    )
-
-
-
-# ----------------- FORGOT & RESET PASSWORD -----------------
 @app.route('/forgot-password', methods=['GET','POST'])
 def forgot_password():
-    # Redirect if already logged in
     if 'loggedin' in session:
         return redirect(url_for('admin') if session.get('role')=='admin' else url_for('student_dashboard'))
 
@@ -438,7 +298,7 @@ def forgot_password():
 
 @app.route('/verify-reset-otp', methods=['GET','POST'])
 def verify_reset_otp():
-    # Redirect if already logged in
+
     if 'loggedin' in session:
         return redirect(url_for('admin') if session.get('role')=='admin' else url_for('student_dashboard'))
 
@@ -459,7 +319,7 @@ def verify_reset_otp():
 
 @app.route('/reset-password', methods=['GET','POST'])
 def reset_password():
-    # Redirect if already logged in
+
     if 'loggedin' in session:
         return redirect(url_for('admin') if session.get('role')=='admin' else url_for('student_dashboard'))
 
@@ -486,7 +346,7 @@ def reset_password():
     
     return render_template('reset_password.html', redirect_login=False)
 
-# ----------------- STUDENT DASHBOARD -----------------
+
 @app.route('/student_dashboard')
 def student_dashboard():
     if 'loggedin' not in session or session.get('role') != 'user':
@@ -494,7 +354,6 @@ def student_dashboard():
 
     user = User.query.get(session.get('id'))
 
-    # If user not found, clear session and redirect to login
     if not user:
         session.clear()
         flash("User not found. Please login again.", "error")
@@ -505,14 +364,168 @@ def student_dashboard():
         if user.profile_pic else
         url_for('static', filename='img/default_avatar.png')
     )
+    return render_template('student_dashboard.html', username=session.get('username', 'Student'),profile_pic_url=profile_pic)
 
-    return render_template(
-        'student_dashboard.html',
-        username=session.get('username', 'Student'),
-        profile_pic_url=profile_pic
+
+@app.route('/userprofile', methods=['GET', 'POST'])
+def userprofile():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session.get('id'))
+    if not user:
+        session.clear()
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        action = request.form.get("action")
+
+        if action == "update_pic" and 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+
+            if file.filename == '':
+                return jsonify({"ok": False, "error": "No file selected."}) 
+            if not file or not allowed_file(file.filename):
+                return jsonify({"ok": False, "error": "Invalid or missing file."})
+
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"{uuid.uuid4().hex}.{ext}"
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(save_path)
+
+            user.profile_pic = filename
+            db.session.commit()
+            session['profile_pic'] = filename
+            return jsonify({"ok": True,"filename": filename})
+
+        elif action == "update_profile":
+            new_username = request.form.get('username', '').strip()
+            if len(new_username) < 3:
+                return jsonify({"ok": False, "error": "Username too short"})
+
+            existing_user = User.query.filter_by(username=new_username).first()
+            if existing_user and str(existing_user.id) != str(user.id):
+                return jsonify({"ok": False, "error": "Username already taken"})
+
+            user.username = new_username
+            db.session.commit()
+            session['username'] = new_username
+            return jsonify({"ok": True})
+
+        elif action == "change_password":
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
+            if not password or not confirm_password:
+                return jsonify({"ok": False, "error": "Password fields cannot be empty."})
+            if password != confirm_password:
+                return jsonify({"ok": False, "error": "Passwords do not match."})
+
+            user.password = generate_password_hash(password)
+            db.session.commit()
+            return jsonify({"ok": True})
+        
+    profile_pic_url = (
+        url_for('static', filename='uploads/' + user.profile_pic)
+        if user.profile_pic else
+        url_for('static', filename='img/default_avatar.png')
     )
+    return render_template("user_profile.html",user=user,profile_pic_url=profile_pic_url,current_year=datetime.now().year)
 
-# ----------------- ADMIN -----------------
+@app.route('/randomquiz')
+def random_quiz():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    course = "be computer"  
+    semesters = ['1', '2', '3', '4', '5', '6', '7', '8']  
+    selected_questions = []
+    for sem in semesters:
+        questions = Question.query.filter_by(course=course, semester=sem)\
+                                  .order_by(func.random())\
+                                  .limit(2).all()
+        selected_questions.extend(questions)
+
+    questions_data = []
+    for q in selected_questions:
+        questions_data.append({
+            "question": q.question,
+            "options": [q.choice1, q.choice2, q.choice3, q.choice4],
+            "correct_index": q.correct_index
+        })
+
+    return render_template('randomquiz.html', questions=questions_data, username=session['username'])
+
+
+@app.route('/quiz')
+def quiz():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+    faculty = request.args.get('faculty', '').strip().lower()
+    course = request.args.get('course', '').strip().lower()
+    semester = request.args.get('semester', '').strip()
+    level = request.args.get('level', '').strip().lower()
+
+    if not all([faculty, course, semester, level]):
+        return "Invalid quiz selection.", 400
+    
+    questions = Question.query.filter(
+        db.func.lower(Question.faculty) == faculty,
+        db.func.lower(Question.course) == course,
+        Question.semester == semester,
+        db.func.lower(Question.level) == level
+    ).all()
+
+    return render_template('quiz.html',questions=questions,username=session['username'],faculty=faculty,course=course,semester=semester)
+
+
+@app.route('/submit_quiz', methods=['POST'])
+def submit_quiz():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    score = int(request.form.get('score', 0))
+    faculty = request.form.get('faculty', '').strip()
+    course = request.form.get('course', '').strip()
+    semester = request.form.get('semester', '').strip()
+
+    # Current UTC time + Nepal offset
+    nepali_time = datetime.utcnow() + NEPAL_OFFSET
+
+    # Save report with additional info
+    new_report = Report(
+        user_id=session['id'],
+        username=session['username'],
+        score=score,
+        faculty=faculty,
+        course=course,
+        semester=semester,
+        submitted_at=nepali_time
+    )
+    db.session.add(new_report)
+    db.session.commit()
+
+    return render_template('result.html', score=score, username=session['username'], faculty=faculty, course=course, semester=semester)
+
+
+@app.route('/becomputer')
+def be_computer(): 
+    return render_template('becomputer.html')
+@app.route('/bca')
+def bca():
+    return render_template('bca.html')
+@app.route('/becivil')
+def be_civil(): 
+    return render_template('becivil.html')
+@app.route('/bba')
+def bba():
+    return render_template('bba.html')
+@app.route('/bbs')
+def bbs(): 
+    return render_template('bbs.html')
+
+
 @app.route('/admin')
 def admin():
     if 'loggedin' in session and session['role']=='admin':
@@ -521,8 +534,7 @@ def admin():
         return render_template('admin_users.html', users=users, reports=reports)
     return redirect(url_for('login'))
 
-# ---------- ADMIN USER MANAGEMENT (LIVE UPDATE + DELETE) ----------
-# ---------- ADMIN USER MANAGEMENT (LIVE UPDATE + DELETE) ----------
+    
 @app.route('/admin/update_user', methods=['POST'])
 def update_user():
     if 'loggedin' not in session or session.get('role') != 'admin':
@@ -568,56 +580,6 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"ok": False, "error": str(e)})
-
-@app.route('/add_question', methods=['GET', 'POST'])
-def add_question():
-    if 'loggedin' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        data = request.get_json() or request.form  # handle AJAX or form submission
-
-        try:
-            # Normalize and clean data
-            faculty = data['faculty'].strip().lower()   # store lowercase
-            course = data['course'].strip().lower()     # store lowercase
-            semester = str(data['semester']).strip()
-            level = data['quizLevel'].strip().lower()   # lowercase for consistency
-            question_text = data['questionText'].strip()
-            choice1 = data['choice1'].strip()
-            choice2 = data['choice2'].strip()
-            choice3 = data['choice3'].strip()
-            choice4 = data['choice4'].strip()
-            
-            correct = data['correctAnswer'].strip().lower()
-            correct_index = {"choice1":0, "choice2":1, "choice3":2, "choice4":3}.get(correct, 0)
-
-            # Create question object
-            new_question = Question(
-                faculty=faculty,
-                course=course,
-                semester=semester,
-                level=level,
-                question=question_text,
-                choice1=choice1,
-                choice2=choice2,
-                choice3=choice3,
-                choice4=choice4,
-                correct_index=correct_index
-            )
-
-            db.session.add(new_question)
-            db.session.commit()
-            return jsonify({"ok": True, "msg": "Question added successfully!"})
-
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"ok": False, "error": str(e)})
-
-    return render_template('add_question.html')
-
-
-# ---------- ADMIN QUESTION MANAGEMENT (VIEW/EDIT/DELETE) ----------
 
 @app.route('/admin/get_questions')
 def get_questions():
@@ -690,69 +652,53 @@ def delete_question(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"ok": False, "error": str(e)})
-
-
-
-@app.route('/quiz')
-def quiz():
-    if 'loggedin' not in session:
+    
+@app.route('/add_question', methods=['GET', 'POST'])
+def add_question():
+    if 'loggedin' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
 
-    # Get query parameters and normalize to lowercase
-    faculty = request.args.get('faculty', '').strip().lower()
-    course = request.args.get('course', '').strip().lower()
-    semester = request.args.get('semester', '').strip()
-    level = request.args.get('level', '').strip().lower()
+    if request.method == 'POST':
+        data = request.get_json() or request.form  # handle AJAX or form submission
 
-    if not all([faculty, course, semester, level]):
-        return "Invalid quiz selection.", 400
+        try:
+            # Normalize and clean data
+            faculty = data['faculty'].strip().lower()   # store lowercase
+            course = data['course'].strip().lower()     # store lowercase
+            semester = str(data['semester']).strip()
+            level = data['quizLevel'].strip().lower()   # lowercase for consistency
+            question_text = data['questionText'].strip()
+            choice1 = data['choice1'].strip()
+            choice2 = data['choice2'].strip()
+            choice3 = data['choice3'].strip()
+            choice4 = data['choice4'].strip()
+            
+            correct = data['correctAnswer'].strip().lower()
+            correct_index = {"choice1":0, "choice2":1, "choice3":2, "choice4":3}.get(correct, 0)
 
-    # Query database using case-insensitive match
-    questions = Question.query.filter(
-        db.func.lower(Question.faculty) == faculty,
-        db.func.lower(Question.course) == course,
-        Question.semester == semester,
-        db.func.lower(Question.level) == level
-    ).all()
+            # Create question object
+            new_question = Question(
+                faculty=faculty,
+                course=course,
+                semester=semester,
+                level=level,
+                question=question_text,
+                choice1=choice1,
+                choice2=choice2,
+                choice3=choice3,
+                choice4=choice4,
+                correct_index=correct_index
+            )
 
-    return render_template(
-        'quiz.html',
-        questions=questions,
-        username=session['username'],
-        faculty=faculty,
-        course=course,
-        semester=semester
-    )
+            db.session.add(new_question)
+            db.session.commit()
+            return jsonify({"ok": True, "msg": "Question added successfully!"})
 
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"ok": False, "error": str(e)})
 
-@app.route('/submit_quiz', methods=['POST'])
-def submit_quiz():
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-
-    score = int(request.form.get('score', 0))
-    faculty = request.form.get('faculty', '').strip()
-    course = request.form.get('course', '').strip()
-    semester = request.form.get('semester', '').strip()
-
-    # Current UTC time + Nepal offset
-    nepali_time = datetime.utcnow() + NEPAL_OFFSET
-
-    # Save report with additional info
-    new_report = Report(
-        user_id=session['id'],
-        username=session['username'],
-        score=score,
-        faculty=faculty,
-        course=course,
-        semester=semester,
-        submitted_at=nepali_time
-    )
-    db.session.add(new_report)
-    db.session.commit()
-
-    return render_template('result.html', score=score, username=session['username'], faculty=faculty, course=course, semester=semester)
-
+    return render_template('add_question.html')
 
 
 @app.route('/admin/reports')
@@ -762,28 +708,26 @@ def admin_reports():
         return render_template('reports.html', reports=reports)
     return redirect(url_for('login'))
 
-# ----------------- STATIC PAGES -----------------
-@app.route('/becomputer')
-def be_computer(): return render_template('becomputer.html')
-@app.route('/bca')
-def bca(): return render_template('bca.html')
-@app.route('/becivil')
-def be_civil(): return render_template('becivil.html')
-@app.route('/bba')
-def bba(): return render_template('bba.html')
-@app.route('/bbs')
-def bbs(): return render_template('bbs.html')
 
-# ----------------- ERROR HANDLER -----------------
-@app.errorhandler(413)
-def file_too_large(e):
-    return "File too large", 413
+@app.route('/admin/delete_report/<int:report_id>', methods=['DELETE'])
+def delete_report(report_id):
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({"ok": False, "error": "Report not found"}), 404
+    try:
+        db.session.delete(report)
+        db.session.commit()
+        return jsonify({"ok": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"ok": False, "error": str(e)}), 500
 
-# ----------------- RUN -----------------
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out successfully.", "success")
+    return redirect(url_for('login'))
+
 if __name__ == '__main__':
-    app.run(debug=False)
-
-
-
-
-
+    app.run(debug=True)
