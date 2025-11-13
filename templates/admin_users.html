@@ -402,21 +402,56 @@ table button:hover {
   }
 }
 
+#quizzesSection form { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  margin-top: 15px; 
+}
+#quizzesSection label { 
+  font-weight: 600; 
+}
+#quizzesSection input, #quizzesSection select, #quizzesSection textarea { 
+  padding: 8px; 
+  border-radius: 6px; 
+  border: 1px solid #374151; 
+  background: #0d1117; 
+  color: var(--text); 
+}
+#quizzesSection fieldset { 
+  border: 1px solid #374151; 
+  padding: 10px; 
+  border-radius: 8px; 
+}
+#quizzesSection fieldset legend { 
+  font-weight: 600; 
+}
+#quizzesSection .flex { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+#quizzesSection .btn { 
+  padding: 8px 12px; 
+  border-radius: 6px; 
+  font-weight: 600; 
+  cursor: pointer; 
+}
+#quizzesSection .btn-primary { 
+  background: var(--accent); 
+  color: #fff; 
+}
+#quizzesSection .btn-primary:hover { 
+  background: #0097a7; 
+}
+#quizzesSection .btn-danger { 
+  background: var(--danger); 
+  color: #fff; 
+}
+#quizzesSection .btn-danger:hover { 
+  background: #c0392b; 
+}
 
-/* ===== Quizzes Section ===== */
-#quizzesSection form { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-#quizzesSection label { font-weight: 600; }
-#quizzesSection input, #quizzesSection select, #quizzesSection textarea { padding: 8px; border-radius: 6px; border: 1px solid #374151; background: #0d1117; color: var(--text); }
-#quizzesSection fieldset { border: 1px solid #374151; padding: 10px; border-radius: 8px; }
-#quizzesSection fieldset legend { font-weight: 600; }
-#quizzesSection .flex { display: flex; align-items: center; gap: 8px; }
-#quizzesSection .btn { padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-#quizzesSection .btn-primary { background: var(--accent); color: #fff; }
-#quizzesSection .btn-primary:hover { background: #0097a7; }
-#quizzesSection .btn-danger { background: var(--danger); color: #fff; }
-#quizzesSection .btn-danger:hover { background: #c0392b; }
-
-/* ==== MOBILE FIX FOR QUESTIONS SECTION ==== */
 @media (max-width: 768px) {
   #questions-section {
     padding: 15px;
@@ -487,10 +522,9 @@ table button:hover {
   }
 }
 
-  /* ===== Mobile-friendly All Questions Table ===== */
 @media (max-width: 768px) {
   #questionsTable thead {
-    display: none; /* hide table header */
+    display: none;
   }
 
   #questionsTable tbody tr {
@@ -561,7 +595,7 @@ table button:hover {
 </div>
 
 <div class="main-content">
-  <!-- Dashboard Section -->
+  
   <div id="dashboardSection" class="section active">
     <h2>Welcome to Quizzer Admin Panel 🎉</h2>
     <p>Manage users, quizzes, and analyze reports efficiently.</p>
@@ -585,7 +619,7 @@ table button:hover {
     </div>
   </div>
 
-  <!-- Users Section -->
+ 
   <div id="usersSection" class="section">
     <h2>Users</h2>
     <table id="usersTable">
@@ -611,7 +645,7 @@ table button:hover {
     </table>
   </div>
 
-  <!-- Quizzes Section (Added) -->
+
   <div id="quizzesSection" class="section">
     <h2>Add Quiz Question</h2>
     <form id="questionForm">
@@ -678,7 +712,7 @@ table button:hover {
     </form>
   </div>
 
-  <!-- Questions Section -->
+ 
 <div id="questionsSection" class="section">
   <h2>All Questions</h2>
   <table id="questionsTable">
@@ -700,7 +734,7 @@ table button:hover {
 </div>
 
 
-  <!-- Reports Section -->
+
   <div id="reportsSection" class="section">
     <h2>Reports</h2>
     <table id="reportsTable">
@@ -737,7 +771,7 @@ table button:hover {
   </div>
 </div>
 
-<!-- Existing Modals for Users & Reports -->
+
 <div id="editUserModal" class="modal">
   <div class="modal-content">
     <h3>Edit User</h3>
@@ -823,12 +857,11 @@ function showSection(id,btn){
   if(window.innerWidth<768)toggleSidebar();
 }
 
-/* ===== Users & Reports Functions (unchanged) ===== */
 function redirectToQuizzes(){ showSection('quizzesSection'); }
 function openEditModal(id){ const row=document.querySelector(`tr[data-id='${id}']`); if(!row)return; document.getElementById("editUserId").value=id; document.getElementById("editFirstName").value=row.querySelector(".first_name").innerText; document.getElementById("editLastName").value=row.querySelector(".last_name").innerText; document.getElementById("editUsername").value=row.querySelector(".username").innerText; document.getElementById("editEmail").value=row.querySelector(".email").innerText; document.getElementById("editRole").value=row.querySelector(".role").innerText.trim(); document.getElementById("editUserModal").style.display="flex"; }
 function closeEditModal(){ document.getElementById("editUserModal").style.display="none"; }
 
-/* ===== Delete Users & Reports (unchanged) ===== */
+
 let deleteTargetId=null; let deleteReportId=null; let deleteQuestionId = null;
 function confirmDeleteUser(id){ const row=document.querySelector(`tr[data-id='${id}']`); const role=row.querySelector(".role").innerText.trim(); if(role==="admin"){showToast("❌ Cannot delete admin!","error");return;} if(parseInt(id)===currentAdminId){showToast("❌ Cannot delete yourself!","error");return;} deleteTargetId=id; deleteReportId=null; document.getElementById("deleteConfirmModal").style.display="flex"; }
 function confirmDeleteReport(id){
@@ -841,10 +874,6 @@ function confirmDeleteReport(id){
 function closeDeleteConfirm(){ document.getElementById("deleteConfirmModal").style.display="none"; deleteTargetId=null; deleteReportId=null; }
 
 
-
-
-/* ===== Logout ===== */
-/* ===== Logout Modal ===== */
 function confirmLogout() {
   document.getElementById("logoutModal").style.display = "flex";
 }
@@ -859,7 +888,6 @@ document.getElementById("confirmLogoutBtn").addEventListener("click", function()
 
 window.onclick=e=>{if(e.target.classList.contains('modal'))e.target.style.display='none';};
 
-/* ===== Edit User AJAX ===== */
 document.getElementById("editUserForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const data={id:editUserId.value, first_name:editFirstName.value, last_name:editLastName.value, username:editUsername.value, email:editEmail.value, role:editRole.value};
@@ -878,15 +906,15 @@ document.getElementById("editUserForm").addEventListener("submit",async e=>{
   }catch(e){showToast("❌ "+e.message,"error");}
 });
 
-/* ===== Confirm Delete AJAX ===== */
+
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
   try {
-    // ===== Delete Report =====
+
     if (deleteReportId) {
       const res = await fetch(`/admin/delete_report/${deleteReportId}`, { method: 'DELETE' });
       const result = await res.json();
       if (result.ok) {
-        // Remove the row from the table immediately
+        
        const row = document.querySelector(`#reportsTable tr[data-id='${deleteReportId}']`);
 
         if (row) row.remove();
@@ -897,7 +925,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
       deleteReportId = null;
     }
 
-    // ===== Delete User (already working) =====
+
     else if (deleteTargetId) {
       const res = await fetch(`/admin/delete_user/${deleteTargetId}`, { method: 'DELETE' });
       const result = await res.json();
@@ -910,7 +938,6 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
       deleteTargetId = null;
     }
 
-    // ===== Delete Question (already working) =====
     else if (deleteQuestionId) {
       const res = await fetch(`/admin/delete_question/${deleteQuestionId}`, { method:'DELETE' });
       const result = await res.json();
@@ -928,10 +955,6 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
   closeDeleteConfirm();
 });
 
-
-
-
-/* ===== Quizzes Section JS ===== */
 const facultySelect=document.getElementById('faculty');
 const courseSelect=document.getElementById('course');
 
@@ -951,7 +974,6 @@ facultySelect.addEventListener('change',()=>{
   }
 });
 
-/* ===== Persistent Selection using localStorage ===== */
 function saveSelections() {
   localStorage.setItem('faculty', facultySelect.value);
   localStorage.setItem('course', courseSelect.value);
@@ -967,10 +989,8 @@ function loadSelections() {
 
   if (faculty) {
     facultySelect.value = faculty;
-    // Trigger course population
     facultySelect.dispatchEvent(new Event('change'));
 
-    // Wait for course dropdown to populate, then set value
     setTimeout(() => {
       if (course) courseSelect.value = course;
     }, 100);
@@ -979,14 +999,11 @@ function loadSelections() {
   if (quizLevel) document.getElementById('quizLevel').value = quizLevel;
 }
 
-/* ===== Save selection when user changes any ===== */
 [facultySelect, courseSelect, document.getElementById('semester'), document.getElementById('quizLevel')]
   .forEach(sel => sel.addEventListener('change', saveSelections));
 
-/* ===== Load saved values on page load ===== */
 document.addEventListener('DOMContentLoaded', loadSelections);
 
-/* ===== Add Quiz Question AJAX (no reset of main fields) ===== */
 document.getElementById("questionForm").addEventListener("submit", async function(e){
   e.preventDefault();
   const data = {
@@ -1011,7 +1028,6 @@ document.getElementById("questionForm").addEventListener("submit", async functio
     const result = await res.json();
     if (result.ok) {
       showToast("✅ Question added successfully!");
-      // Reset only question and options, not the selections
       document.getElementById('questionText').value = '';
       this.choice1.value = '';
       this.choice2.value = '';
@@ -1025,11 +1041,11 @@ document.getElementById("questionForm").addEventListener("submit", async functio
 });
 
 
-/* ===== Pull-to-Refresh for Mobile ===== */
+
 if(window.innerWidth <= 768){
   let startY = 0;
   let isPulling = false;
-  const threshold = 70; // px to trigger refresh
+  const threshold = 70; 
 
   window.addEventListener('touchstart', e => {
     if(window.scrollY === 0){
@@ -1061,7 +1077,6 @@ if(window.innerWidth <= 768){
   });
 }
 
-  /* ===== Questions Section JS ===== */
 async function loadQuestions() {
   try {
     const res = await fetch('/admin/get_questions');
@@ -1135,13 +1150,14 @@ document.getElementById('editQuestionForm').addEventListener('submit', async e=>
     showToast("✅ Question updated!");
   } else showToast("❌ "+result.error, 'error');
 });
+
 function deleteQuestion(id){
   deleteQuestionId = id;
   deleteTargetId = null;
   deleteReportId = null;
   document.getElementById("deleteConfirmModal").style.display = "flex";
 }
-/* Load questions automatically when section is opened */
+
 const originalShowSection = showSection;
 showSection = function(id, btn){
   originalShowSection(id, btn);
