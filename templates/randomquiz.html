@@ -17,16 +17,45 @@
     --button-bg: linear-gradient(45deg, #00796b, #004d40);
 }
 
-/* ====== General Styles ====== */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
-body { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--bg-login); color: var(--text-color); position: relative; overflow: hidden; }
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Montserrat', sans-serif; 
+}
+body { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background: var(--bg-login); 
+    color: var(--text-color); 
+    position: relative; 
+    overflow: hidden; 
+}
 
-/* Floating background circles */
-.circle { position: absolute; border-radius: 50%; opacity: 0.15; animation: float 10s infinite ease-in-out alternate; }
-.circle1 { width: 200px; height: 200px; top: -50px; left: -50px; background: #fff; }
-.circle2 { width: 300px; height: 300px; bottom: -100px; right: -80px; background: #000; animation-duration: 12s; }
+.circle { 
+    position: absolute; 
+    border-radius: 50%; 
+    opacity: 0.15; 
+    animation: float 10s infinite ease-in-out alternate; 
+}
+.circle1 { 
+    width: 200px; 
+    height: 200px; 
+    top: -50px; 
+    left: -50px; 
+    background: #fff; 
+}
+.circle2 { 
+    width: 300px; 
+    height: 300px; 
+    bottom: -100px; 
+    right: -80px; 
+    background: #000; 
+    animation-duration: 12s; 
+}
 
-/* Quiz container */
 .quiz-container {
     background-color: var(--container-bg);
     padding: 20px 40px;
@@ -38,9 +67,11 @@ body { display: flex; justify-content: center; align-items: center; height: 100v
     position: relative;
 }
 
-h1 { color: #00bcd4; margin-bottom: 20px; }
+h1 { 
+    color: #00bcd4; 
+    margin-bottom: 20px; 
+}
 
-/* Options list */
 #options {
     list-style-type: none;
     padding: 0;
@@ -60,7 +91,6 @@ h1 { color: #00bcd4; margin-bottom: 20px; }
     color: white;
 }
 
-/* Next button */
 #nextBtn {
     margin-top: 20px;
     padding: 12px;
@@ -79,26 +109,37 @@ h1 { color: #00bcd4; margin-bottom: 20px; }
     transform: translateY(-2px);
 }
 
-/* Result text */
 #result {
     margin-top: 20px;
     font-size: 20px;
     font-weight: bold;
 }
 
-/* Floating animation */
-@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+@keyframes float { 
+    0%, 100% { 
+        transform: translateY(0px); 
+    } 50% { 
+        transform: translateY(-20px); 
+    } 
+}
 
-/* Responsive */
-@media(max-width: 768px) {
-    .quiz-container { width: 90%; padding: 20px; border-radius: 10px; }
-    .circle1, .circle2 { width: 120px; height: 120px; opacity: 0.08; }
+@media(max-width: 768px) 
+{
+    .quiz-container { 
+        width: 90%; 
+        padding: 20px; 
+        border-radius: 10px; 
+    }
+    .circle1, .circle2 { 
+        width: 120px; 
+        height: 120px; 
+        opacity: 0.08; 
+    }
 }
 </style>
 </head>
 <body>
 
-<!-- Floating circles -->
 <div class="circle circle1"></div>
 <div class="circle circle2"></div>
 
@@ -168,10 +209,7 @@ nextBtn.addEventListener('click', () => {
     loadQuestion();
 });
 
-// Load first question
 loadQuestion();
 </script>
-
-
 </body>
 </html>
