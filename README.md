@@ -75,7 +75,7 @@ You are **not allowed** to:
 
 For special permissions, contact the owner directly.
 
-Full legal text is included in the [LICENSE](LICENSE) file.
+Full legal text is included in the [LICENSE](LICENSE.md) file.
 
 ---
 
