@@ -1,4 +1,4 @@
-# Quizzer
+# Quizzer Hub
 
 ![License](https://img.shields.io/badge/license-Proprietary-red)
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
