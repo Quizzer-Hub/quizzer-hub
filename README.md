@@ -89,6 +89,6 @@ For internal or collaborative access, contact the owner.
 ## Author Information
 
 **Name:** [Dinesh Singh Dhami](https://dineshsinghdhami.com.np)  
-**GitHub:** [https://github.com/dineshsinghdhami](https://github.com/dineshsinghdhami)
-**Linkedin:** [https://www.linkedin.com/in/dineshsinghdhami1/](https://www.linkedin.com/in/dineshsinghdhami1/)
+**GitHub:** [https://github.com/dineshsinghdhami](https://github.com/dineshsinghdhami)  
+**Linkedin:** [https://www.linkedin.com/in/dineshsinghdhami1/](https://www.linkedin.com/in/dineshsinghdhami1/)  
 **Email:** [dineshdhamidn@gmail.com](mailto:dineshdhamidn@gmail.com)
